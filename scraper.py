@@ -569,6 +569,7 @@ def generate_html(conn):
             date_found, url, desc, source = r
         desc_clean   = (desc or "").replace("<", "&lt;").replace(">", "&gt;")
         desc_preview = desc_clean[:380]
+        ellipsis     = "…" if len(desc_clean) > 380 else ""
         dp = date_posted if date_posted and date_posted not in ("None","") else ""
         country_tag  = f'<span class="tag country-tag">{country}</span>' if country else ""
         dp_tag       = f'<span class="tag date-tag">{dp}</span>' if dp else ""
@@ -588,7 +589,7 @@ def generate_html(conn):
     {country_tag}
     {dp_tag}
   </div>
-  <p class="card-desc">{desc_preview}{"…" if len(desc_clean) > 380 else ""}</p>
+  <p class="card-desc">{desc_preview}{ellipsis}</p>
   <a class="apply-link" href="{url}" target="_blank" rel="noopener">
     View &amp; Apply <span class="arrow">→</span>
   </a>
@@ -596,6 +597,18 @@ def generate_html(conn):
 
     country_opts  = "".join(f'<option value="{c}">{c}</option>' for c in countries)
     company_opts  = "".join(f'<option value="{c}">{c}</option>' for c in companies)
+
+    # Pre-build company pills (can't use backslashes inside f-string expressions)
+    company_pills_html = "".join(
+        '<button class="cpill" onclick="setCompany(this, &quot;' + c + '&quot;)">' + c + '</button>'
+        for c in companies
+    )
+
+    # Pre-build date/update strings
+    last_updated_short = datetime.now().strftime('%d %b')
+    last_updated_full  = datetime.now().strftime('%Y-%m-%d %H:%M UTC')
+    rows_count         = len(rows)
+    countries_count    = len(countries)
 
     html = f"""<!DOCTYPE html>
 <html lang="en">
@@ -1103,15 +1116,15 @@ body {{
     <div class="stat-label">Total tracked</div>
   </div>
   <div class="stat-card">
-    <div class="stat-value" id="s-shown">{len(rows)}</div>
+    <div class="stat-value" id="s-shown">{rows_count}</div>
     <div class="stat-label">Showing</div>
   </div>
   <div class="stat-card">
-    <div class="stat-value">{len(countries)}</div>
+    <div class="stat-value">{countries_count}</div>
     <div class="stat-label">Countries</div>
   </div>
   <div class="stat-card">
-    <div class="stat-value">{datetime.now().strftime('%d %b')}</div>
+    <div class="stat-value">{last_updated_short}</div>
     <div class="stat-label">Last updated</div>
   </div>
 </div>
@@ -1144,7 +1157,7 @@ body {{
 <!-- COMPANY PILLS -->
 <div class="company-filters">
   <button class="cpill active" onclick="setCompany(this, '')">All companies</button>
-  {"".join(f'<button class="cpill" onclick="setCompany(this, \\'{c}\\')">{c}</button>' for c in companies)}
+  {company_pills_html}
 </div>
 
 <!-- RESULTS META -->
@@ -1161,7 +1174,7 @@ body {{
 <!-- FOOTER -->
 <footer class="footer">
   <span>Sources: ABB · Honeywell · Emerson · Rockwell · Yokogawa · Siemens · Schneider · LinkedIn · Indeed · Bayt · Wuzzuf</span>
-  <span>Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M UTC')}</span>
+  <span>Last updated: {last_updated_full}</span>
 </footer>
 
 <script>
@@ -1204,7 +1217,7 @@ function render() {{
       case 'title-asc':    return a.querySelector('.card-title').innerText.localeCompare(b.querySelector('.card-title').innerText);
       case 'company-asc':  return a.dataset.company.localeCompare(b.dataset.company);
       default: return 0;
-    }
+    }}
   }});
 
   visible.forEach(c => grid.appendChild(c));
