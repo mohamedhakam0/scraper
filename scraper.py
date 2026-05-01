@@ -263,26 +263,49 @@ def scrape_abb():
 # ─────────────────────────────────────────────
 
 WORKDAY_COMPANIES = [
-    {"company": "Rockwell Automation", "tenant": "rockwellautomation",
-     "site": "External_Rockwell_Automation", "wd": "wd1"},
-    {"company": "Yokogawa",            "tenant": "yokogawa",
-     "site": "yokogawa-career-site",          "wd": "wd3"},
+    # Rockwell: standard wd1 subdomain format
+    {
+        "company": "Rockwell Automation",
+        "tenant":  "rockwellautomation",
+        "site":    "External_Rockwell_Automation",
+        "wd":      "wd1",
+        "base_url": "https://rockwellautomation.wd1.myworkdayjobs.com",
+    },
+    # Yokogawa: uses jobs.myworkdaysite.com/recruiting/{tenant}/{site} format
+    {
+        "company": "Yokogawa",
+        "tenant":  "yokogawa",
+        "site":    "yokogawa-career-site",
+        "wd":      "wd3",
+        "base_url": "https://wd3.myworkdaysite.com",
+    },
 ]
 
 
 def scrape_workday_company(cfg):
-    company, tenant, site, wd = cfg["company"], cfg["tenant"], cfg["site"], cfg["wd"]
+    company  = cfg["company"]
+    tenant   = cfg["tenant"]
+    site     = cfg["site"]
+    wd       = cfg["wd"]
+    base_url = cfg["base_url"]
     print(f"\n[{company}] Workday CXS API …")
     found, offset, limit = [], 0, 50
 
+    # Build the correct CXS API URL for each URL format
+    if "myworkdaysite.com" in base_url:
+        cxs_url  = f"{base_url}/wday/cxs/{tenant}/{site}/jobs"
+        site_url = f"{base_url}/recruiting/{tenant}/{site}"
+    else:
+        cxs_url  = f"{base_url}/wday/cxs/{tenant}/{site}/jobs"
+        site_url = f"{base_url}/en-US/{site}"
+
     while True:
         try:
-            url = f"https://{tenant}.{wd}.myworkdayjobs.com/wday/cxs/{tenant}/{site}/jobs"
             resp = requests.post(
-                url,
+                cxs_url,
                 json={"appliedFacets": {}, "limit": limit, "offset": offset, "searchText": ""},
                 headers={**HTTP_HEADERS, "Content-Type": "application/json",
-                         "Referer": f"https://{tenant}.{wd}.myworkdayjobs.com/en-US/{site}"},
+                         "Referer": site_url},
                 timeout=20,
             )
             resp.raise_for_status()
@@ -297,7 +320,7 @@ def scrape_workday_company(cfg):
                 title = p.get("title",         "") or ""
                 loc   = p.get("locationsText", "") or ""
                 path  = p.get("externalPath",  "")
-                job_url = f"https://{tenant}.{wd}.myworkdayjobs.com/en-US/{site}{path}"
+                job_url = f"{site_url}{path}"
                 if is_mena(loc):
                     found.append(normalize(
                         company, title, loc, "",
@@ -323,7 +346,9 @@ def scrape_workday_company(cfg):
 # ─────────────────────────────────────────────
 
 ORACLE_COMPANIES = [
-    {"company": "Honeywell", "domain": "ibqbjb.fa.ocs.oraclecloud.com", "site_number": "CX_1"},
+    # Honeywell: site name is "Honeywell" (confirmed: /hcmUI/CandidateExperience/en/sites/Honeywell/jobs)
+    {"company": "Honeywell", "domain": "ibqbjb.fa.ocs.oraclecloud.com", "site_number": "Honeywell"},
+    # Emerson: site name is "CX_1" (confirmed: /hcmUI/CandidateExperience/en/sites/CX_1)
     {"company": "Emerson",   "domain": "hdjq.fa.us2.oraclecloud.com",   "site_number": "CX_1"},
 ]
 
@@ -395,37 +420,103 @@ def scrape_oracle_company(cfg):
 # ─────────────────────────────────────────────
 
 def scrape_siemens():
-    print("\n[Siemens] jobs.siemens.com REST API …")
+    """
+    Siemens uses iCIMS at jobs.siemens.com/en_US/externaljobs/
+    The search endpoint is a POST to their iCIMS search API.
+    We search per MENA country and filter results.
+    """
+    print("\n[Siemens] iCIMS API (jobs.siemens.com) …")
     found = []
+    seen_ids = set()
 
-    for country in SIEMENS_MENA_COUNTRIES:
-        try:
-            resp = requests.get(
-                "https://jobs.siemens.com/api/apply/v2/jobs",
-                params={"domain": "siemens.com", "start": 0, "num": 100,
-                        "location": country, "sort_by": "relevance"},
-                headers=HTTP_HEADERS, timeout=20,
-            )
-            resp.raise_for_status()
-            positions = resp.json().get("positions", [])
+    # iCIMS search endpoint — discovered from XHR inspection of jobs.siemens.com
+    search_url = "https://jobs.siemens.com/en_US/externaljobs/SearchJobsAJAX"
 
-            for p in positions:
-                title = p.get("name",     "") or ""
-                loc   = p.get("location", "") or ""
-                desc  = p.get("description", "") or ""
-                jid   = p.get("id", "")
-                job_url = p.get("canonicalPositionUrl") or f"https://jobs.siemens.com/jobs/{jid}"
-                clean_desc = BeautifulSoup(desc, "html.parser").get_text()[:3000] if desc else ""
-                # Use the country we searched — it's definitionally MENA
-                found.append(normalize(
-                    "Siemens", title, f"{loc}, {country}" if loc else country,
-                    clean_desc, job_url, "Siemens Careers", f"siemens_{jid}",
-                ))
+    # Country codes used in iCIMS facet filter
+    siemens_country_map = {
+        "Egypt":                "EGY",
+        "Saudi Arabia":         "SAU",
+        "United Arab Emirates": "ARE",
+        "Qatar":                "QAT",
+        "Kuwait":               "KWT",
+        "Bahrain":              "BHR",
+        "Oman":                 "OMN",
+        "Jordan":               "JOR",
+        "Iraq":                 "IRQ",
+        "Morocco":              "MAR",
+        "Libya":                "LBY",
+        "Tunisia":              "TUN",
+        "Algeria":              "DZA",
+    }
 
-            print(f"  {country}: {len(positions)}")
-            time.sleep(0.5)
-        except Exception as e:
-            print(f"  [Siemens/{country} ERROR] {e}")
+    for country_name, country_code in siemens_country_map.items():
+        offset = 0
+        page_size = 25
+        while True:
+            try:
+                params = {
+                    "pr":     page_size,
+                    "pg":     (offset // page_size) + 1,
+                    "4838":   f'["{country_name}"]',   # country facet
+                    "4838_format": "9118",
+                    "listFilterMode": "1",
+                }
+                resp = requests.get(
+                    "https://jobs.siemens.com/en_US/externaljobs/SearchJobs",
+                    params=params,
+                    headers={**HTTP_HEADERS, "Accept": "text/html,application/xhtml+xml"},
+                    timeout=20,
+                )
+                # iCIMS returns HTML — parse it
+                if resp.status_code != 200:
+                    break
+
+                soup = BeautifulSoup(resp.text, "html.parser")
+                job_items = soup.select("li.iCIMS_JobsTable_HRTableRow, article.job-listing, .iCIMS_Clickable")
+
+                if not job_items:
+                    # Try alternate selectors for job rows
+                    job_items = soup.select("tr.iCIMS_JobsTable_HRTableRow")
+
+                if not job_items:
+                    break
+
+                batch_count = 0
+                for item in job_items:
+                    link = item.select_one("a[href*='/job/']") or item.select_one("a")
+                    title_el = item.select_one(".iCIMS_JobsTable_Title, .job-title, h2, h3")
+                    loc_el   = item.select_one(".iCIMS_JobsTable_Location, .job-location, .location")
+
+                    title   = title_el.get_text(strip=True) if title_el else ""
+                    loc     = loc_el.get_text(strip=True)   if loc_el   else country_name
+                    job_url = link["href"] if link and link.get("href") else ""
+                    if job_url and not job_url.startswith("http"):
+                        job_url = "https://jobs.siemens.com" + job_url
+
+                    jid = job_url.split("/job/")[-1].split("?")[0] if "/job/" in job_url else job_url
+                    if jid in seen_ids:
+                        continue
+                    seen_ids.add(jid)
+
+                    if title:
+                        found.append(normalize(
+                            "Siemens", title, f"{loc}, {country_name}" if loc else country_name,
+                            "", job_url, "Siemens Careers", f"siemens_{jid}",
+                        ))
+                        batch_count += 1
+
+                print(f"  {country_name} pg {(offset//page_size)+1}: {batch_count}")
+
+                # Check if there are more pages
+                next_btn = soup.select_one("a.iCIMS_NextPage, a[title='Next Page'], .pagination .next")
+                if not next_btn or batch_count == 0:
+                    break
+                offset += page_size
+                time.sleep(1.0)
+
+            except Exception as e:
+                print(f"  [Siemens/{country_name} ERROR] {e}")
+                break
 
     print(f"  → {len(found)} Siemens jobs")
     return found
@@ -443,35 +534,69 @@ SCHNEIDER_MENA_COUNTRY_CODES = [
 
 
 def scrape_schneider():
+    """
+    Schneider Electric uses SmartRecruiters.
+    Company slug confirmed: 'SchneiderElectric' on SmartRecruiters public API.
+    """
     print("\n[Schneider Electric] SmartRecruiters API …")
     found = []
 
-    for cc in SCHNEIDER_MENA_COUNTRY_CODES:
-        try:
-            resp = requests.get(
-                "https://api.smartrecruiters.com/v1/companies/SchneiderElectric/postings",
-                params={"country": cc, "limit": 100, "offset": 0},
-                headers=HTTP_HEADERS, timeout=20,
-            )
-            if resp.status_code != 200:
-                continue
-            data = resp.json()
-            for job in data.get("content", []):
-                title = job.get("name", "") or ""
-                city  = (job.get("location") or {}).get("city", "") or ""
-                cname = (job.get("location") or {}).get("country", {}).get("label", "") or ""
-                loc   = f"{city}, {cname}".strip(", ")
-                jid   = job.get("id", "")
-                job_url = f"https://jobs.smartrecruiters.com/SchneiderElectric/{jid}"
-                found.append(normalize(
-                    "Schneider Electric", title, loc, "",
-                    job_url, "Schneider Electric Careers",
-                    f"schneider_{jid}",
-                ))
-            print(f"  {cc}: {len(data.get('content', []))}")
-            time.sleep(0.4)
-        except Exception as e:
-            print(f"  [Schneider/{cc} ERROR] {e}")
+    # SmartRecruiters uses ISO 3166-1 alpha-2 country codes
+    country_code_map = {
+        "EG": "Egypt", "SA": "Saudi Arabia", "AE": "United Arab Emirates",
+        "QA": "Qatar",  "KW": "Kuwait",       "BH": "Bahrain",
+        "OM": "Oman",   "JO": "Jordan",       "IQ": "Iraq",
+        "LB": "Lebanon","LY": "Libya",         "TN": "Tunisia",
+        "DZ": "Algeria","MA": "Morocco",
+    }
+
+    for cc, country_name in country_code_map.items():
+        offset = 0
+        while True:
+            try:
+                resp = requests.get(
+                    "https://api.smartrecruiters.com/v1/companies/SchneiderElectric/postings",
+                    params={"country": cc, "limit": 100, "offset": offset},
+                    headers={**HTTP_HEADERS, "X-SmartToken": ""},
+                    timeout=20,
+                )
+                if resp.status_code == 404:
+                    # Try alternate slug
+                    resp = requests.get(
+                        "https://api.smartrecruiters.com/v1/companies/Schneider-Electric/postings",
+                        params={"country": cc, "limit": 100, "offset": offset},
+                        headers=HTTP_HEADERS, timeout=20,
+                    )
+                if resp.status_code not in (200, 201):
+                    break
+
+                data = resp.json()
+                jobs = data.get("content", [])
+                total = data.get("totalFound", 0)
+
+                for job in jobs:
+                    title = job.get("name", "") or ""
+                    city  = (job.get("location") or {}).get("city", "") or ""
+                    cname = ((job.get("location") or {}).get("country") or {}).get("label", "") or country_name
+                    loc   = f"{city}, {cname}".strip(", ")
+                    jid   = job.get("id", "")
+                    job_url = f"https://jobs.smartrecruiters.com/SchneiderElectric/{jid}"
+                    found.append(normalize(
+                        "Schneider Electric", title, loc, "",
+                        job_url, "Schneider Electric Careers",
+                        f"schneider_{jid}",
+                    ))
+
+                print(f"  {cc} ({country_name}): {len(jobs)} | total {total}")
+
+                if offset + 100 >= total or len(jobs) == 0:
+                    break
+                offset += 100
+                time.sleep(0.4)
+
+            except Exception as e:
+                print(f"  [Schneider/{cc} ERROR] {e}")
+                break
 
     print(f"  → {len(found)} Schneider jobs")
     return found
@@ -482,31 +607,41 @@ def scrape_schneider():
 # ─────────────────────────────────────────────
 
 def scrape_job_boards():
+    """
+    Simplified job board scraping — fewer queries to avoid rate limiting.
+    Searches each company once per MENA country on LinkedIn + Indeed only
+    (Bayt blocks with 403, so removed).
+    """
     if not JOBSPY_AVAILABLE:
         print("  [SKIP] python-jobspy not installed")
         return []
 
-    print("\n[Job Boards] LinkedIn / Indeed / Bayt / Wuzzuf …")
+    print("\n[Job Boards] LinkedIn + Indeed …")
     all_dfs = []
 
-    for term in SEARCH_TERMS:
-        for company in ["Honeywell", "ABB", "Emerson", "Rockwell Automation",
-                        "Siemens", "Schneider Electric", "Yokogawa"]:
-            query = f"{company} {term}"
+    # Search each company with location context — much fewer total queries
+    mena_locations = ["Egypt", "Saudi Arabia", "UAE", "Qatar", "Kuwait", "Oman"]
+    companies = ["Honeywell", "ABB", "Emerson", "Rockwell Automation",
+                 "Siemens", "Schneider Electric", "Yokogawa"]
+
+    for company in companies:
+        for loc in mena_locations:
+            query = f"{company} jobs {loc}"
             print(f"  🔍 '{query}'")
             try:
                 df = jobspy_scrape(
-                    site_name=["linkedin", "indeed", "bayt"],
-                    search_term=query,
-                    results_wanted=25,
-                    hours_old=72,
+                    site_name=["linkedin", "indeed"],
+                    search_term=company,
+                    location=loc,
+                    results_wanted=20,
+                    hours_old=96,
                     description_format="markdown",
                 )
                 if df is not None and not df.empty:
                     all_dfs.append(df)
             except Exception as e:
                 print(f"    [ERROR] {e}")
-            time.sleep(1)
+            time.sleep(2)  # Longer delay to avoid rate limiting
 
     if not all_dfs:
         return []
