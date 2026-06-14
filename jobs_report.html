@@ -500,11 +500,11 @@ body {
 <!-- STATS -->
 <div class="stats-bar">
   <div class="stat-card">
-    <div class="stat-value" id="s-total">577</div>
+    <div class="stat-value" id="s-total">579</div>
     <div class="stat-label">Total tracked</div>
   </div>
   <div class="stat-card">
-    <div class="stat-value" id="s-shown">577</div>
+    <div class="stat-value" id="s-shown">579</div>
     <div class="stat-label">Showing</div>
   </div>
   <div class="stat-card">
@@ -512,7 +512,7 @@ body {
     <div class="stat-label">Countries</div>
   </div>
   <div class="stat-card">
-    <div class="stat-value">13 Jun</div>
+    <div class="stat-value">14 Jun</div>
     <div class="stat-label">Last updated</div>
   </div>
 </div>
@@ -556,6 +556,44 @@ body {
 <!-- GRID -->
 <div class="grid" id="grid">
   <div class="card"
+            data-company="El Abb Holding"
+            data-country="Qatar"
+            data-posted="nan"
+            data-found="2026-06-14">
+  <div class="card-top">
+    <div class="company-pill">El Abb Holding</div>
+    <div class="source-label">linkedin</div>
+  </div>
+  <h3 class="card-title"><a href="https://www.linkedin.com/jobs/view/4425732165" target="_blank" rel="noopener">Trading Manager</a></h3>
+  <div class="card-tags">
+    <span class="tag loc-tag">📍 Doha, Qatar</span>
+    <span class="tag country-tag">Qatar</span>
+    <span class="tag date-tag">nan</span>
+  </div>
+  <p class="card-desc">None</p>
+  <a class="apply-link" href="https://www.linkedin.com/jobs/view/4425732165" target="_blank" rel="noopener">
+    View &amp; Apply <span class="arrow">→</span>
+  </a>
+</div><div class="card"
+            data-company="Siemens"
+            data-country="UAE"
+            data-posted="2026-06-12"
+            data-found="2026-06-14">
+  <div class="card-top">
+    <div class="company-pill">Siemens</div>
+    <div class="source-label">linkedin</div>
+  </div>
+  <h3 class="card-title"><a href="https://www.linkedin.com/jobs/view/4426978886" target="_blank" rel="noopener">PRO PM Manager MEA – Siemens Grid Software</a></h3>
+  <div class="card-tags">
+    <span class="tag loc-tag">📍 Dubai, Dubai, United Arab Emirates</span>
+    <span class="tag country-tag">UAE</span>
+    <span class="tag date-tag">2026-06-12</span>
+  </div>
+  <p class="card-desc">None</p>
+  <a class="apply-link" href="https://www.linkedin.com/jobs/view/4426978886" target="_blank" rel="noopener">
+    View &amp; Apply <span class="arrow">→</span>
+  </a>
+</div><div class="card"
             data-company="Siemens Energy"
             data-country="UAE"
             data-posted="nan"
@@ -11525,7 +11563,7 @@ body {
 <!-- FOOTER -->
 <footer class="footer">
   <span>Sources: ABB · Honeywell · Emerson · Rockwell · Yokogawa · Siemens · Schneider · LinkedIn · Indeed · Bayt · Wuzzuf</span>
-  <span>Last updated: 2026-06-13 10:12 UTC</span>
+  <span>Last updated: 2026-06-14 10:35 UTC</span>
 </footer>
 
 <script>
@@ -11576,7 +11614,7 @@ function render() {
   // Count
   const n = visible.length;
   document.getElementById('results-count').innerHTML =
-    `Showing <strong>${n}</strong> of <strong>577</strong> jobs`;
+    `Showing <strong>${n}</strong> of <strong>579</strong> jobs`;
   document.getElementById('s-shown').textContent = n;
 
   // Empty state
