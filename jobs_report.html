@@ -500,7 +500,7 @@ body {
 <!-- STATS -->
 <div class="stats-bar">
   <div class="stat-card">
-    <div class="stat-value" id="s-total">895</div>
+    <div class="stat-value" id="s-total">896</div>
     <div class="stat-label">Total tracked</div>
   </div>
   <div class="stat-card">
@@ -512,7 +512,7 @@ body {
     <div class="stat-label">Countries</div>
   </div>
   <div class="stat-card">
-    <div class="stat-value">18 Jul</div>
+    <div class="stat-value">19 Jul</div>
     <div class="stat-label">Last updated</div>
   </div>
 </div>
@@ -556,6 +556,25 @@ body {
 <!-- GRID -->
 <div class="grid" id="grid">
   <div class="card"
+            data-company="Yokogawa"
+            data-country="Saudi Arabia"
+            data-posted="2026-07-15"
+            data-found="2026-07-19">
+  <div class="card-top">
+    <div class="company-pill">Yokogawa</div>
+    <div class="source-label">linkedin</div>
+  </div>
+  <h3 class="card-title"><a href="https://www.linkedin.com/jobs/view/4441203628" target="_blank" rel="noopener">Service Engineer</a></h3>
+  <div class="card-tags">
+    <span class="tag loc-tag">📍 Al Khobar, Eastern, Saudi Arabia</span>
+    <span class="tag country-tag">Saudi Arabia</span>
+    <span class="tag date-tag">2026-07-15</span>
+  </div>
+  <p class="card-desc">None</p>
+  <a class="apply-link" href="https://www.linkedin.com/jobs/view/4441203628" target="_blank" rel="noopener">
+    View &amp; Apply <span class="arrow">→</span>
+  </a>
+</div><div class="card"
             data-company="ABB"
             data-country="Egypt"
             data-posted="nan"
@@ -15736,25 +15755,6 @@ body {
   <a class="apply-link" href="https://www.linkedin.com/jobs/view/4410565346" target="_blank" rel="noopener">
     View &amp; Apply <span class="arrow">→</span>
   </a>
-</div><div class="card"
-            data-company="Emerson"
-            data-country="Qatar"
-            data-posted="None"
-            data-found="2026-05-06">
-  <div class="card-top">
-    <div class="company-pill">Emerson</div>
-    <div class="source-label">linkedin</div>
-  </div>
-  <h3 class="card-title"><a href="https://www.linkedin.com/jobs/view/4410571142" target="_blank" rel="noopener">Cybersecurity Engineer</a></h3>
-  <div class="card-tags">
-    <span class="tag loc-tag">📍 Doha, Qatar</span>
-    <span class="tag country-tag">Qatar</span>
-    
-  </div>
-  <p class="card-desc">None</p>
-  <a class="apply-link" href="https://www.linkedin.com/jobs/view/4410571142" target="_blank" rel="noopener">
-    View &amp; Apply <span class="arrow">→</span>
-  </a>
 </div>
   <div class="empty" id="empty">No jobs match your filters.</div>
 </div>
@@ -15762,7 +15762,7 @@ body {
 <!-- FOOTER -->
 <footer class="footer">
   <span>Sources: ABB · Honeywell · Emerson · Rockwell · Yokogawa · Siemens · Schneider · LinkedIn · Indeed · Bayt · Wuzzuf</span>
-  <span>Last updated: 2026-07-18 09:00 UTC</span>
+  <span>Last updated: 2026-07-19 09:17 UTC</span>
 </footer>
 
 <script>
@@ -15813,7 +15813,7 @@ function render() {
   // Count
   const n = visible.length;
   document.getElementById('results-count').innerHTML =
-    `Showing <strong>${n}</strong> of <strong>895</strong> jobs`;
+    `Showing <strong>${n}</strong> of <strong>896</strong> jobs`;
   document.getElementById('s-shown').textContent = n;
 
   // Empty state
