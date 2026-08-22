@@ -500,7 +500,7 @@ body {
 <!-- STATS -->
 <div class="stats-bar">
   <div class="stat-card">
-    <div class="stat-value" id="s-total">1183</div>
+    <div class="stat-value" id="s-total">1184</div>
     <div class="stat-label">Total tracked</div>
   </div>
   <div class="stat-card">
@@ -512,7 +512,7 @@ body {
     <div class="stat-label">Countries</div>
   </div>
   <div class="stat-card">
-    <div class="stat-value">21 Aug</div>
+    <div class="stat-value">22 Aug</div>
     <div class="stat-label">Last updated</div>
   </div>
 </div>
@@ -556,6 +556,25 @@ body {
 <!-- GRID -->
 <div class="grid" id="grid">
   <div class="card"
+            data-company="Emerson"
+            data-country="UAE"
+            data-posted="nan"
+            data-found="2026-08-22">
+  <div class="card-top">
+    <div class="company-pill">Emerson</div>
+    <div class="source-label">linkedin</div>
+  </div>
+  <h3 class="card-title"><a href="https://www.linkedin.com/jobs/view/4457311414" target="_blank" rel="noopener">HSE Specialist</a></h3>
+  <div class="card-tags">
+    <span class="tag loc-tag">📍 Dubai, Dubai, United Arab Emirates</span>
+    <span class="tag country-tag">UAE</span>
+    <span class="tag date-tag">nan</span>
+  </div>
+  <p class="card-desc">None</p>
+  <a class="apply-link" href="https://www.linkedin.com/jobs/view/4457311414" target="_blank" rel="noopener">
+    View &amp; Apply <span class="arrow">→</span>
+  </a>
+</div><div class="card"
             data-company="Yokogawa"
             data-country="Saudi Arabia"
             data-posted="nan"
@@ -15736,25 +15755,6 @@ body {
   <a class="apply-link" href="https://careers.abb/global/en/job/ABB1GLOBALJR00023923EXTERNALENGLOBAL/lvs-export-sales-support-specialist" target="_blank" rel="noopener">
     View &amp; Apply <span class="arrow">→</span>
   </a>
-</div><div class="card"
-            data-company="ABB"
-            data-country="UAE"
-            data-posted=""
-            data-found="2026-05-27">
-  <div class="card-top">
-    <div class="company-pill">ABB</div>
-    <div class="source-label">ABB Careers</div>
-  </div>
-  <h3 class="card-title"><a href="https://careers.abb/global/en/job/ABB1GLOBALJR00034779EXTERNALENGLOBAL/sales-specialist-epc-channel" target="_blank" rel="noopener">Sales Specialist - EPC Channel</a></h3>
-  <div class="card-tags">
-    <span class="tag loc-tag">📍 Dubai, Dubai, United Arab Emirates</span>
-    <span class="tag country-tag">UAE</span>
-    
-  </div>
-  <p class="card-desc">Embrace the opportunity to become a Sales Specialist – EPC Channel and drive revenue growth in the UAE’s construction and infrastructure sector. Leverage your expertise in EPC sales, channel management, and stakeholder engagement to deliver strategic plans and build strong client relationships. Shape the future of electrification solutions with ABB in Dubai.</p>
-  <a class="apply-link" href="https://careers.abb/global/en/job/ABB1GLOBALJR00034779EXTERNALENGLOBAL/sales-specialist-epc-channel" target="_blank" rel="noopener">
-    View &amp; Apply <span class="arrow">→</span>
-  </a>
 </div>
   <div class="empty" id="empty">No jobs match your filters.</div>
 </div>
@@ -15762,7 +15762,7 @@ body {
 <!-- FOOTER -->
 <footer class="footer">
   <span>Sources: ABB · Honeywell · Emerson · Rockwell · Yokogawa · Siemens · Schneider · LinkedIn · Indeed · Bayt · Wuzzuf</span>
-  <span>Last updated: 2026-08-21 07:57 UTC</span>
+  <span>Last updated: 2026-08-22 07:45 UTC</span>
 </footer>
 
 <script>
@@ -15813,7 +15813,7 @@ function render() {
   // Count
   const n = visible.length;
   document.getElementById('results-count').innerHTML =
-    `Showing <strong>${n}</strong> of <strong>1183</strong> jobs`;
+    `Showing <strong>${n}</strong> of <strong>1184</strong> jobs`;
   document.getElementById('s-shown').textContent = n;
 
   // Empty state
